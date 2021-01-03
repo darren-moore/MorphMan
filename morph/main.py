@@ -336,6 +336,9 @@ def updateNotes(allDb):
                       max=N_notes,
                       immediate=True)
 
+
+    MMI_MOD = 10000000
+    seenFocusesToNids = {}
     for i, (nid, mid, flds, guid, tags) in enumerate(query_results):
         ts = TAG.split(tags)
         if i % 500 == 0:
@@ -464,6 +467,12 @@ def updateNotes(allDb):
 
         # calculate mmi
         mmi = 100000 * N_k + 1000 * lenDiff + int(round(usefulness))
+
+        if (focusMorph is not None):
+            if (focusMorph.base not in seenFocusesToNids):
+                seenFocusesToNids[focusMorph.base] = []
+            seenFocusesToNids[focusMorph.base].append(nid)
+
         if C('set due based on mmi'):
             nid2mmi[nid] = mmi
             
@@ -522,6 +531,16 @@ def updateNotes(allDb):
     # Now reorder new cards based on MMI
     mw.progress.update(label='Updating new card ordering...')
     ds = []
+
+    # If reviewing on mobile, without the custom morphman scheduler, blow-up the MMI of duplicate focus morphs
+    for focusMorph in seenFocusesToNids:
+        nids = seenFocusesToNids[focusMorph]
+        mmis = [nid2mmi[i] for i in nids]
+        minIdx = mmis.index(min(mmis))
+        for myNid in nids:
+            nid2mmi[myNid] += MMI_MOD
+        #fix the good one
+        nid2mmi[nids[minIdx]] -= MMI_MOD
 
     # "type = 0": new cards
     # "type = 1": learning cards [is supposed to be learning: in my case no learning card had this type]
