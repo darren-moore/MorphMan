@@ -865,6 +865,11 @@ class MorphMan(QDialog):
                 self.ui.studyPlanTable.setSortingEnabled(True)
                 self.ui.studyPlanTable.resizeColumnsToContents()
                 mw.progress.finish()
+                
+                # sort learned_morphs by "all_freq" (at index 3)
+                # this lets us focus on the highest frequency morphs over the entire folder
+                third = lambda a : a[3]
+                learned_morphs.sort(reverse=True,key=third)
 
                 if save_frequency_list:
                     self.writeOutput("\n[Saving frequency list to '%s'...]\n" % frequency_list_path)
